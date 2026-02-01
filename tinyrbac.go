@@ -49,6 +49,9 @@ type Rbac struct {
 	resourceIdxMap [maxResources]string
 }
 
+// NewFromJsonConfig creates an RBAC instance from a JSON config
+// file at the given path. An error is returned when the config
+// file cannot be proccessed.
 func NewFromJsonConfig(path string) (*Rbac, error) {
 	conf, err := readFromJson(path)
 	if err != nil {
@@ -58,6 +61,9 @@ func NewFromJsonConfig(path string) (*Rbac, error) {
 	return buildFromConfig(conf)
 }
 
+// NewFromJsonConfig creates an RBAC instance from a YAML config
+// file at the given path. An error is returned when the config
+// file cannot be proccessed.
 func NewFromYamlConfig(path string) (*Rbac, error) {
 	conf, err := readFromYaml(path)
 	if err != nil {
@@ -67,6 +73,7 @@ func NewFromYamlConfig(path string) (*Rbac, error) {
 	return buildFromConfig(conf)
 }
 
+// buildFromConfig builds the actual access map from config.
 func buildFromConfig(conf *config) (*Rbac, error) {
 	r := &Rbac{}
 	buildRoleAndResourceNames(conf, r)

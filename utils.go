@@ -21,6 +21,9 @@ func getHTTPActionOffset(action string) int {
 	}
 }
 
+// buildRoleAndResourceNames extracts roles and resources from config.
+// The extracted information is stored in a sorted manner which allows for
+// the core idea of using the role-index and resource-index mapping to perform rbac operations.
 func buildRoleAndResourceNames(c *config, r *Rbac) {
 	resourcesMap := make(map[string]bool)
 	i := 0

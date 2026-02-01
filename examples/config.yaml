@@ -1,0 +1,34 @@
+description: "A simple RBAC definition"
+roles:
+  - name: "Admin"
+    description: "Admin has full access to all resources."
+    resources:
+      - name: "*"
+        actions:
+          - "GET"
+          - "POST"
+          - "PUT"
+          - "PATCH"
+          - "DELETE"
+  - name: "Instance Manager"
+    description: "Instance Manager has full access to instances."
+    resources:
+      - name: "instances"
+        actions:
+          - "GET"
+          - "POST"
+          - "PUT"
+          - "PATCH"
+          - "DELETE"
+      - name: "upgrade-management"
+        actions:
+          - "GET"
+  - name: "Auditor"
+    description: "Auditor has only read access to applications"
+    resources:
+      - name: "applications"
+        actions:
+          - "GET"
+      - name: "audit-logs"
+        actions:
+          - "GET"

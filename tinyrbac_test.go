@@ -249,3 +249,51 @@ func Test_Check(t *testing.T) {
 		})
 	}
 }
+
+func Test_CheckWithError(t *testing.T) {
+	f, _ := os.CreateTemp(".", "*.json")
+	defer os.Remove(f.Name())
+	f.Write([]byte(rolesJson))
+
+	testcases := []struct {
+		name           string
+		role           string
+		resource       string
+		action         string
+		expectedAccess bool
+		expectedError  string
+	}{
+		{
+			name:           "role not found",
+			role:           "Operator",
+			resource:       "instances",
+			action:         "POST",
+			expectedAccess: false,
+			expectedError:  "unknown role: Operator",
+		},
+		{
+			name:           "resource not found",
+			role:           "Instance Manager",
+			resource:       "orders",
+			action:         "POST",
+			expectedAccess: false,
+			expectedError:  "unknown resource: orders",
+		},
+	}
+
+	r, err := NewFromJsonConfig(f.Name())
+	if err != nil {
+		t.Error(err)
+	}
+
+	for _, tt := range testcases {
+		t.Run(tt.name, func(t *testing.T) {
+			access, err := r.CheckWithError(tt.role, tt.resource, tt.action)
+			if tt.expectedError != "" {
+				require.Error(t, err)
+				assert.Equal(t, tt.expectedError, err.Error())
+			}
+			assert.Equal(t, tt.expectedAccess, access)
+		})
+	}
+}

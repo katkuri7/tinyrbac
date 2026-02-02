@@ -49,30 +49,6 @@ type Rbac struct {
 	resourceIdxMap [maxResources]string
 }
 
-// NewFromJsonConfig creates an RBAC instance from a JSON config
-// file at the given path. An error is returned when the config
-// file cannot be proccessed.
-func NewFromJsonConfig(path string) (*Rbac, error) {
-	conf, err := readFromJson(path)
-	if err != nil {
-		return nil, fmt.Errorf("read config error: %w", err)
-	}
-
-	return buildFromConfig(conf)
-}
-
-// NewFromJsonConfig creates an RBAC instance from a YAML config
-// file at the given path. An error is returned when the config
-// file cannot be proccessed.
-func NewFromYamlConfig(path string) (*Rbac, error) {
-	conf, err := readFromYaml(path)
-	if err != nil {
-		return nil, fmt.Errorf("read config error: %w", err)
-	}
-
-	return buildFromConfig(conf)
-}
-
 // buildFromConfig builds the actual access map from config.
 func buildFromConfig(conf *config) (*Rbac, error) {
 	r := &Rbac{}
@@ -97,9 +73,32 @@ func buildFromConfig(conf *config) (*Rbac, error) {
 	return r, nil
 }
 
-// Check validates if 'role' has access to perform 'action' on 'resource'.
+// NewFromJsonConfig creates an RBAC instance from a JSON config
+// file at the given path. An error is returned when the config
+// file cannot be proccessed.
+func NewFromJsonConfig(path string) (*Rbac, error) {
+	conf, err := readFromJson(path)
+	if err != nil {
+		return nil, fmt.Errorf("read config error: %w", err)
+	}
+
+	return buildFromConfig(conf)
+}
+
+// NewFromJsonConfig creates an RBAC instance from a YAML config
+// file at the given path. An error is returned when the config
+// file cannot be proccessed.
+func NewFromYamlConfig(path string) (*Rbac, error) {
+	conf, err := readFromYaml(path)
+	if err != nil {
+		return nil, fmt.Errorf("read config error: %w", err)
+	}
+
+	return buildFromConfig(conf)
+}
+
 // TODO: Justify linearly searching instead of using a hash map.
-func (r *Rbac) Check(role, resource, action string) bool {
+func (r *Rbac) check(role, resource, action string) (bool, error) {
 	roleIdx, resourceIdx := -1, -1
 	for idx, roleName := range r.roleIdxMap {
 		if roleName == role {
@@ -108,7 +107,7 @@ func (r *Rbac) Check(role, resource, action string) bool {
 		}
 	}
 	if roleIdx == -1 {
-		return false
+		return false, fmt.Errorf("unknown role: %s", role)
 	}
 
 	for idx, resourceName := range r.resourceIdxMap {
@@ -118,9 +117,23 @@ func (r *Rbac) Check(role, resource, action string) bool {
 		}
 	}
 	if resourceIdx == -1 {
-		return false
+		return false, fmt.Errorf("unknown resource: %s", resource)
 	}
 
 	accessIdx := roleIdx*maxActions + getHTTPActionOffset(action)
-	return r.accessMap[accessIdx]&resourceSet(1<<resourceIdx) != 0
+	return r.accessMap[accessIdx]&resourceSet(1<<resourceIdx) != 0, nil
+}
+
+// Check validates if 'role' has access to perform 'action' on 'resource'.
+// It returns false if there is a validation error before access check.
+// To get a detailed error use CheckWithError.
+func (r *Rbac) Check(role, resource, action string) bool {
+	hasAccess, _ := r.check(role, resource, action)
+	return hasAccess
+}
+
+// CheckWithError validates if 'role' has access to perform 'action' on 'resource'.
+// If there is an error, false is returned along with the error.
+func (r *Rbac) CheckWithError(role, resource, action string) (bool, error) {
+	return r.check(role, resource, action)
 }

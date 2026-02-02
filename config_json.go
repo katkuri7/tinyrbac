@@ -23,10 +23,10 @@ func readFromJson(path string) (*config, error) {
 		return nil, errConfigRead(jsonConfigFiletype, path, err)
 	}
 
-	var conf config
-	if err := json.Unmarshal(data, &conf); err != nil {
+	var c config
+	if err := json.Unmarshal(data, &c); err != nil {
 		return nil, errConfigUnmarshal(jsonConfigFiletype, path, err)
 	}
 
-	return &conf, nil
+	return &c, nil
 }

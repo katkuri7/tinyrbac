@@ -24,10 +24,10 @@ func readFromYaml(path string) (*config, error) {
 		return nil, errConfigRead(yamlConfigFiletype, path, err)
 	}
 
-	conf := config{}
-	if err := yaml.Unmarshal(data, &conf); err != nil {
+	c := config{}
+	if err := yaml.Unmarshal(data, &c); err != nil {
 		return nil, errConfigUnmarshal(yamlConfigFiletype, path, err)
 	}
 
-	return &conf, nil
+	return &c, nil
 }

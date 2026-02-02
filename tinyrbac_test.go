@@ -101,7 +101,7 @@ func Test_NewFromJsonConfig(t *testing.T) {
 			expectedErr: "",
 		},
 		{
-			name:                    "error reading from json conf",
+			name:                    "error reading from json config",
 			jsonContent:             " invalid json ",
 			expectedRoleIdxMap:      nil,
 			expectedResourcesIdxMap: nil,
@@ -161,7 +161,7 @@ func Test_NewFromYamlConfig(t *testing.T) {
 			expectedErr: "",
 		},
 		{
-			name:                    "error reading from yaml conf",
+			name:                    "error reading from yaml confing",
 			yamlContent:             `rol`,
 			expectedRoleIdxMap:      nil,
 			expectedResourcesIdxMap: nil,

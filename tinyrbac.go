@@ -50,11 +50,11 @@ type Rbac struct {
 }
 
 // buildFromConfig builds the actual access map from config.
-func buildFromConfig(conf *config) (*Rbac, error) {
+func buildFromConfig(c *config) (*Rbac, error) {
 	r := &Rbac{}
-	buildRoleAndResourceNames(conf, r)
+	buildRoleAndResourceNames(c, r)
 
-	for _, role := range conf.Roles {
+	for _, role := range c.Roles {
 		accessIdx := slices.Index(r.roleIdxMap[:], role.Name) * maxActions
 		for _, resource := range role.Resources {
 			if resource.Name == allResources {
@@ -77,24 +77,24 @@ func buildFromConfig(conf *config) (*Rbac, error) {
 // file at the given path. An error is returned when the config
 // file cannot be proccessed.
 func NewFromJsonConfig(path string) (*Rbac, error) {
-	conf, err := readFromJson(path)
+	c, err := readFromJson(path)
 	if err != nil {
 		return nil, fmt.Errorf("read config error: %w", err)
 	}
 
-	return buildFromConfig(conf)
+	return buildFromConfig(c)
 }
 
 // NewFromJsonConfig creates an RBAC instance from a YAML config
 // file at the given path. An error is returned when the config
 // file cannot be proccessed.
 func NewFromYamlConfig(path string) (*Rbac, error) {
-	conf, err := readFromYaml(path)
+	c, err := readFromYaml(path)
 	if err != nil {
 		return nil, fmt.Errorf("read config error: %w", err)
 	}
 
-	return buildFromConfig(conf)
+	return buildFromConfig(c)
 }
 
 // TODO: Justify linearly searching instead of using a hash map.

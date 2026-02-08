@@ -7,6 +7,8 @@ import (
 
 var (
 	ErrConfigFileNotProvided = errors.New("config file path is empty")
+	ErrNoResources           = errors.New("resources not provided")
+	ErrNoRoles               = errors.New("roles not provided")
 )
 
 func errConfigNotFound(filetype, path string, err error) error {

@@ -10,6 +10,7 @@ import (
 
 const roles = 3
 const rolesJson = `{
+  "resources": ["instances", "applications", "audit-logs"],
   "roles": [
     {
       "name": "Admin",
@@ -26,6 +27,10 @@ const rolesJson = `{
         {
           "name": "instances",
           "actions": ["GET", "POST", "PUT", "PATCH", "DELETE"]
+        },
+		{
+          "name": "audit-logs",
+          "actions": [""]
         }
       ]
     },
@@ -45,7 +50,12 @@ const rolesJson = `{
   ]
 }`
 
-const rolesYaml = `roles:
+const rolesYaml = `
+resources:
+- "instances"
+- "applications"
+- "audit-logs"
+roles:
   - name: Admin
     resources:
       - name: "*"
@@ -101,13 +111,22 @@ func Test_NewFromJsonConfig(t *testing.T) {
 			expectedErr: "",
 		},
 		{
-			name:                    "error reading from json config",
+			name:                    "invalid json config",
 			jsonContent:             " invalid json ",
 			expectedRoleIdxMap:      nil,
 			expectedResourcesIdxMap: nil,
 			expectedAccessMap:       nil,
 			wantErr:                 true,
-			expectedErr:             "read config error",
+			expectedErr:             "read config",
+		},
+		{
+			name:                    "validation error",
+			jsonContent:             `{"resources": []}`,
+			expectedRoleIdxMap:      nil,
+			expectedResourcesIdxMap: nil,
+			expectedAccessMap:       nil,
+			wantErr:                 true,
+			expectedErr:             "validate config: " + ErrNoResources.Error(),
 		},
 	}
 
@@ -161,13 +180,35 @@ func Test_NewFromYamlConfig(t *testing.T) {
 			expectedErr: "",
 		},
 		{
-			name:                    "error reading from yaml confing",
-			yamlContent:             `rol`,
+			name:                    "invalid yaml config",
+			yamlContent:             "rol",
 			expectedRoleIdxMap:      nil,
 			expectedResourcesIdxMap: nil,
 			expectedAccessMap:       nil,
 			wantErr:                 true,
-			expectedErr:             "read config error",
+			expectedErr:             "read config",
+		},
+		{
+			name:                    "invalid config resources",
+			yamlContent:             `resources:`,
+			expectedRoleIdxMap:      nil,
+			expectedResourcesIdxMap: nil,
+			expectedAccessMap:       nil,
+			wantErr:                 true,
+			expectedErr:             "validate config: " + ErrNoResources.Error(),
+		},
+		{
+			name: "invalid config roles",
+			yamlContent: `
+resources:
+- "instances"
+- "applications"
+- "audit-logs"`,
+			expectedRoleIdxMap:      nil,
+			expectedResourcesIdxMap: nil,
+			expectedAccessMap:       nil,
+			wantErr:                 true,
+			expectedErr:             "validate config: " + ErrNoRoles.Error(),
 		},
 	}
 
@@ -202,60 +243,6 @@ func Test_Check(t *testing.T) {
 	f.Write([]byte(rolesJson))
 
 	testcases := []struct {
-		name     string
-		role     string
-		resource string
-		action   string
-		expected bool
-	}{
-		{
-			name:     "role has action access for resource",
-			role:     "Instance Manager",
-			resource: "instances",
-			action:   "POST",
-			expected: true,
-		},
-		{
-			name:     "role does not have action access for resource",
-			role:     "Auditor",
-			resource: "instances",
-			action:   "POST",
-			expected: false,
-		},
-		{
-			name:     "role not found",
-			role:     "Operator",
-			resource: "instances",
-			action:   "POST",
-			expected: false,
-		},
-		{
-			name:     "resource not found",
-			role:     "Instance Manager",
-			resource: "orders",
-			action:   "POST",
-			expected: false,
-		},
-	}
-
-	r, err := NewFromJsonConfig(f.Name())
-	if err != nil {
-		t.Error(err)
-	}
-
-	for _, tt := range testcases {
-		t.Run(tt.name, func(t *testing.T) {
-			assert.Equal(t, tt.expected, r.Check(tt.role, tt.resource, tt.action))
-		})
-	}
-}
-
-func Test_CheckWithError(t *testing.T) {
-	f, _ := os.CreateTemp(".", "*.json")
-	defer os.Remove(f.Name())
-	f.Write([]byte(rolesJson))
-
-	testcases := []struct {
 		name           string
 		role           string
 		resource       string
@@ -263,6 +250,20 @@ func Test_CheckWithError(t *testing.T) {
 		expectedAccess bool
 		expectedError  string
 	}{
+		{
+			name:           "role has action access for resource",
+			role:           "Instance Manager",
+			resource:       "instances",
+			action:         "POST",
+			expectedAccess: true,
+		},
+		{
+			name:           "role does not have action access for resource",
+			role:           "Auditor",
+			resource:       "instances",
+			action:         "POST",
+			expectedAccess: false,
+		},
 		{
 			name:           "role not found",
 			role:           "Operator",
@@ -288,7 +289,7 @@ func Test_CheckWithError(t *testing.T) {
 
 	for _, tt := range testcases {
 		t.Run(tt.name, func(t *testing.T) {
-			access, err := r.CheckWithError(tt.role, tt.resource, tt.action)
+			access, err := r.Check(tt.role, tt.resource, tt.action)
 			if tt.expectedError != "" {
 				require.Error(t, err)
 				assert.Equal(t, tt.expectedError, err.Error())

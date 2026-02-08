@@ -1,5 +1,6 @@
 {
   "description": "A simple RBAC definition",
+  "resources": ["instances", "upgrade-management", "applications", "audit-logs"],
   "roles": [
     {
       "name": "Admin",
